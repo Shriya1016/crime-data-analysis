@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Real Time Crime Data Analysis and Visualization</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto p-4">
+        <h1 class="text-3xl font-bold mb-4">Real Time Crime Data Analysis and Visualization</h1>
+        <div class="mb-4">
+            <label class="block">Police Force:</label>
+            <select id="force" class="border p-2">
+                {% for force in forces %}
+                <option value="{{ force }}">{{ force }}</option>
+                {% endfor %}
+            </select>
+            <label class="block">Year:</label>
+            <select id="year" class="border p-2">
+                {% for year in years %}
+                <option value="{{ year }}">{{ year }}</option>
+                {% endfor %}
+            </select>
+            <label class="block">Month:</label>
+            <select id="month" class="border p-2">
+                {% for month in months %}
+                <option value="{{ month }}">{{ month }}</option>
+                {% endfor %}
+            </select>
+            <label class="block">Crime Type:</label>
+            <select id="crime_type" class="border p-2">
+                <option value="">All</option>
+                {% for crime_type in crime_types %}
+                <option value="{{ crime_type }}">{{ crime_type }}</option>
+                {% endfor %}
+            </select>
+            <button id="fetch" class="bg-blue-500 text-white p-2 mt-2">Fetch Data</button>
+        </div>
+        <div id="map" style="height: 500px;"></div>
+        <div id="graphs" class="mt-4"></div>
+    </div>
+    <script>
+        // Load map
+        function loadMap(mapHtml) {
+            $('#map').html(mapHtml);
+            // Add click event for markers
+            $('.folium-map').on('click', '.leaflet-marker-icon', function(e) {
+                var lat = e.target._latlng.lat;
+                var lng = e.target._latlng.lng;
+                $.post('/get_graphs', {lat: lat, lng: lng}, function(data) {
+                    $('#graphs').html(`
+                        <h2 class="text-2xl font-bold mb-2">Hotspot Analysis</h2>
+                        <img src="data:image/png;base64,${data.pie_chart}" class="mb-4">
+                        <img src="data:image/png;base64,${data.bar_graph}">
+                    `);
+                });
+            });
+        }
+
+        // Fetch data
+        $('#fetch').click(function() {
+            var force = $('#force').val();
+            var year = $('#year').val();
+            var month = $('#month').val();
+            var crime_type = $('#crime_type').val();
+            $.post('/fetch_data', {
+                force: force,
+                year: year,
+                month: month,
+                crime_type: crime_type
+            }, function(data) {
+                loadMap(data.map_html);
+            });
+        });
+    </script>
+</body>
+</html>
